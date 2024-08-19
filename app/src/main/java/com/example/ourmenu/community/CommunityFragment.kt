@@ -40,7 +40,8 @@ class CommunityFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        getCommunity("")
+        page = 0
+        initPostList()
     }
 
     override fun onCreateView(
@@ -103,7 +104,6 @@ class CommunityFragment : Fragment() {
                     Items.clear()
                     binding.rvCommunity.adapter?.notifyItemRangeRemoved(0, size)
                     for (i in response.body()?.response!!) {
-                        Log.d("오류",i.toString())
                         item = CommunityResponseData(
                             i.articleId,
                             i.articleTitle,
@@ -245,6 +245,10 @@ class CommunityFragment : Fragment() {
         binding.rvCommunity.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
+
+                if (recyclerView.getChildAt(0).top == 0&&recyclerView.layoutManager?.findViewByPosition(0)?.top == 0){
+                    initPostList()
+                }
 
                 if (!recyclerView.canScrollVertically(1)) {
                     // 스크롤이 끝났을 때 추가 데이터를 로드

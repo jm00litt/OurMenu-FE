@@ -20,8 +20,10 @@ import android.view.WindowManager
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.graphics.createBitmap
+import androidx.core.view.get
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.ourmenu.R
 import com.example.ourmenu.addMenu.AddMenuActivity
@@ -85,9 +87,7 @@ class MypageFragment : Fragment() {
     ): View? {
         binding = FragmentMypageBinding.inflate(inflater, container, false)
 
-        initPostData()
-
-        initMyPostRV()
+        initPostData(1)
 
         binding.ivMypageAddBtn.setOnClickListener {
             val intent = Intent(requireContext(), AddMenuActivity::class.java)
@@ -103,15 +103,14 @@ class MypageFragment : Fragment() {
         }
 
         getUserInfo()
+        initMyPostRV()
 
         return binding.root
     }
 
     override fun onResume() {
-        Log.d("오류","123")
-        requireActivity().runOnUiThread {
-            initPostData()
-        }
+        page = 0
+        initPostData(1)
         super.onResume()
     }
 
@@ -128,26 +127,39 @@ class MypageFragment : Fragment() {
 
     private fun initMyPostRV() {
         val adapter =
-            MypageRVAdapter(Items,requireContext()) {
+            MypageRVAdapter(Items, requireContext()) {
                 // TODO: 해당 게시물로 이동하기
                 val intent = Intent(context, CommunityWritePostActivity::class.java)
                 intent.putExtra("postData", it)
-                intent.putExtra("ArticleId",it.articleId)
+                intent.putExtra("ArticleId", it.articleId)
                 intent.putExtra("flag", "post")
-                intent.putExtra("isMine",true)
+                intent.putExtra("isMine", true)
                 startActivity(intent)
             }
 
         binding.rvPmfMenu.adapter = adapter
         binding.rvPmfMenu.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvPmfMenu.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                if (!recyclerView.canScrollVertically(1)) {
+                    // 스크롤이 끝났을 때 추가 데이터를 로드
+                    initPostData(0)
+                }
+            }
+        })
     }
 
-    fun initPostData() {
+    fun initPostData(flag: Int) {
         val service = RetrofitObject.retrofit.create(CommunityService::class.java)
-        val call = service.getCommunity("", page++, 5,"CREATED_AT_DESC",true)
+        val call = service.getCommunity("", page++, 5, "CREATED_AT_DESC", true)
         call.enqueue(object : retrofit2.Callback<CommunityResponse> {
             override fun onResponse(call: Call<CommunityResponse>, response: Response<CommunityResponse>) {
                 if (response.isSuccessful) {
+                    if (flag == 1) {
+                        Items.clear()
+                    }
                     for (i in response.body()?.response!!) {
                         Items.add(i!!)
                         binding.rvPmfMenu.adapter?.notifyItemRangeInserted((page - 1) * 5, 5)
@@ -158,7 +170,6 @@ class MypageFragment : Fragment() {
             }
 
             override fun onFailure(call: Call<CommunityResponse>, t: Throwable) {
-                TODO("Not yet implemented")
             }
 
         })

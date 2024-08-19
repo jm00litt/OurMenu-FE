@@ -10,6 +10,7 @@ import com.example.ourmenu.R
 import com.example.ourmenu.data.PostData
 import com.example.ourmenu.data.community.CommunityResponseData
 import com.example.ourmenu.databinding.ItemPostBinding
+import java.time.LocalDateTime
 
 class MypageRVAdapter(
     var items: ArrayList<CommunityResponseData>,
@@ -35,6 +36,7 @@ class MypageRVAdapter(
             binding.tvItemPostTitle.text = item.articleTitle
             binding.tvItemPostContent.text = item.articleContent
             binding.tvItemPostUsername.text = item.userNickname
+            Log.d("오류",LocalDateTime.now().toString())
             binding.tvItemPostTime.text = item.createdBy.take(10)
             binding.tvItemPostViewCount.text = item.articleViews.toString()
             binding.tvItemPostCount.text = item.menusCount.toString()
